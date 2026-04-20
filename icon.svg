@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#2563eb"/>
+  <g fill="#fff" font-family="system-ui,-apple-system,sans-serif" font-weight="800" text-anchor="middle">
+    <text x="256" y="230" font-size="180">%</text>
+    <text x="256" y="380" font-size="90">마진</text>
+  </g>
+</svg>
