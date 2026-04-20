@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>마진 계산기</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f4f6f8;padding:20px;color:#222}
+.wrap{max-width:480px;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08);overflow:hidden}
+h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
+.tabs{display:flex;border-bottom:1px solid #e5e7eb}
+.tab{flex:1;padding:12px 6px;cursor:pointer;background:#f9fafb;border:none;font-size:13px;font-weight:600;color:#6b7280;transition:all .1s}
+.tab.active{background:#fff;color:#2563eb;border-bottom:2px solid #2563eb}
+.panel{display:none;padding:20px}
+.panel.active{display:block}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#374151}
+.field input{width:100%;padding:10px 12px;font-size:16px;border:1px solid #d1d5db;border-radius:6px;outline:none}
+.field input:focus{border-color:#2563eb}
+.results{margin-top:18px;padding:14px;background:#f9fafb;border-radius:6px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:15px}
+.row+.row{border-top:1px solid #e5e7eb}
+.row .k{color:#6b7280;font-weight:600}
+.row .v{font-family:"Consolas",monospace;font-weight:700;color:#111}
+.row.hi .v{color:#2563eb;font-size:17px}
+.row.pos .v{color:#16a34a}
+.row.neg .v{color:#dc2626}
+.reset{width:100%;margin-top:12px;padding:10px;background:#e5e7eb;border:none;border-radius:6px;cursor:pointer;font-size:13px;color:#374151}
+.reset:hover{background:#d1d5db}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>마진 계산기</h1>
+<div class="tabs">
+<button class="tab active" data-t="0">한국→해외</button>
+<button class="tab" data-t="1">해외→해외</button>
+<button class="tab" data-t="2">해외→한국</button>
+</div>
+
+<div class="panel active" id="p0">
+<div class="field"><label>매수가격 (KRW)</label><input type="number" id="a_buy" inputmode="decimal" step="any"></div>
+<div class="field"><label>매도가격</label><input type="number" id="a_sell" inputmode="decimal" step="any"></div>
+<div class="field"><label>현재 환율</label><input type="number" id="a_rate" inputmode="decimal" step="any"></div>
+<div class="results">
+<div class="row"><span class="k">x (매수/환율)</span><span class="v" id="a_x">-</span></div>
+<div class="row"><span class="k">y (매도-x)</span><span class="v" id="a_y">-</span></div>
+<div class="row hi"><span class="k">z 마진율(%)</span><span class="v" id="a_z">-</span></div>
+</div>
+<button class="reset" data-r="0">초기화</button>
+</div>
+
+<div class="panel" id="p1">
+<div class="field"><label>매수가격</label><input type="number" id="b_buy" inputmode="decimal" step="any"></div>
+<div class="field"><label>매도가격</label><input type="number" id="b_sell" inputmode="decimal" step="any"></div>
+<div class="results">
+<div class="row"><span class="k">a (매도-매수)</span><span class="v" id="b_a">-</span></div>
+<div class="row hi"><span class="k">b 마진율(%)</span><span class="v" id="b_b">-</span></div>
+</div>
+<button class="reset" data-r="1">초기화</button>
+</div>
+
+<div class="panel" id="p2">
+<div class="field"><label>매수가격</label><input type="number" id="c_buy" inputmode="decimal" step="any"></div>
+<div class="field"><label>매도가격</label><input type="number" id="c_sell" inputmode="decimal" step="any"></div>
+<div class="results">
+<div class="row"><span class="k">a (매도-매수)</span><span class="v" id="c_a">-</span></div>
+<div class="row hi"><span class="k">b 마진율(%)</span><span class="v" id="c_b">-</span></div>
+</div>
+<button class="reset" data-r="2">초기화</button>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(n,d=2)=>isFinite(n)?n.toLocaleString('ko-KR',{maximumFractionDigits:d,minimumFractionDigits:0}):'-';
+const setCls=(el,v)=>{el.parentElement.classList.remove('pos','neg');if(isFinite(v)){el.parentElement.classList.add(v>=0?'pos':'neg')}};
+
+function calcA(){
+  const buy=parseFloat($('a_buy').value),sell=parseFloat($('a_sell').value),rate=parseFloat($('a_rate').value);
+  if(!isFinite(buy)||!isFinite(rate)||rate===0){$('a_x').textContent='-';$('a_y').textContent='-';$('a_z').textContent='-';return}
+  const x=buy/rate;$('a_x').textContent=fmt(x,4);
+  if(!isFinite(sell)){$('a_y').textContent='-';$('a_z').textContent='-';return}
+  const y=sell-x,z=y/x*100;
+  $('a_y').textContent=fmt(y,4);$('a_z').textContent=fmt(z,2)+'%';
+  setCls($('a_y'),y);setCls($('a_z'),z);
+}
+function calcBC(p){
+  const buy=parseFloat($(p+'_buy').value),sell=parseFloat($(p+'_sell').value);
+  if(!isFinite(buy)||!isFinite(sell)||buy===0){$(p+'_a').textContent='-';$(p+'_b').textContent='-';return}
+  const a=sell-buy,b=a/buy*100;
+  $(p+'_a').textContent=fmt(a,4);$(p+'_b').textContent=fmt(b,2)+'%';
+  setCls($(p+'_a'),a);setCls($(p+'_b'),b);
+}
+
+['a_buy','a_sell','a_rate'].forEach(i=>$(i).addEventListener('input',calcA));
+['b_buy','b_sell'].forEach(i=>$(i).addEventListener('input',()=>calcBC('b')));
+['c_buy','c_sell'].forEach(i=>$(i).addEventListener('input',()=>calcBC('c')));
+
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  $('p'+t.dataset.t).classList.add('active');
+  $('p'+t.dataset.t).querySelector('input').focus();
+}));
+
+document.querySelectorAll('.reset').forEach(b=>b.addEventListener('click',()=>{
+  const p=$('p'+b.dataset.r);
+  p.querySelectorAll('input').forEach(i=>i.value='');
+  p.querySelectorAll('.v').forEach(v=>{v.textContent='-';v.parentElement.classList.remove('pos','neg')});
+  p.querySelector('input').focus();
+}));
+
+$('a_buy').focus();
+</script>
+</body>
+</html>
