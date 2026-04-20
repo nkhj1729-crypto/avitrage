@@ -27,6 +27,7 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#374151}
 .field input{width:100%;padding:10px 12px;font-size:16px;border:1px solid #d1d5db;border-radius:6px;outline:none}
 .field input:focus{border-color:#2563eb}
+.field input.coin{text-transform:uppercase;letter-spacing:1px;font-weight:700}
 .results{margin-top:18px;padding:14px;background:#f9fafb;border-radius:6px}
 .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:15px}
 .row+.row{border-top:1px solid #e5e7eb}
@@ -48,7 +49,8 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 .hist-clear{background:none;border:none;color:#dc2626;font-size:12px;cursor:pointer;padding:4px 6px}
 .hist-group{margin-bottom:12px}
 .hist-coin{font-size:12px;font-weight:700;color:#2563eb;margin-bottom:4px;padding:4px 8px;background:#eff6ff;border-radius:4px;display:inline-block}
-.hist-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;font-size:12px;border-bottom:1px solid #f3f4f6;font-family:"Consolas",monospace}
+.hist-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;font-size:12px;border-bottom:1px solid #f3f4f6;font-family:"Consolas",monospace;cursor:pointer;border-radius:4px}
+.hist-item:hover{background:#f3f4f6}
 .hist-item:last-child{border-bottom:none}
 .hist-item .t{color:#9ca3af;font-size:11px}
 .hist-item .m{font-weight:700}
@@ -69,7 +71,7 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 </div>
 
 <div class="panel active" id="p0">
-<div class="field"><label>코인명</label><input type="text" id="a_coin" placeholder="예: BTC, ETH"></div>
+<div class="field"><label>코인명</label><input type="text" id="a_coin" class="coin" placeholder="예: BTC, ETH" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="10"></div>
 <div class="field"><label>현재 환율</label><input type="number" id="a_rate" inputmode="decimal" step="any"></div>
 <div class="field"><label>매수가격 (KRW)</label><input type="number" id="a_buy" inputmode="decimal" step="any"></div>
 <div class="field"><label>매도가격</label><input type="number" id="a_sell" inputmode="decimal" step="any"></div>
@@ -83,7 +85,7 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 </div>
 
 <div class="panel" id="p1">
-<div class="field"><label>코인명</label><input type="text" id="b_coin" placeholder="예: BTC, ETH"></div>
+<div class="field"><label>코인명</label><input type="text" id="b_coin" class="coin" placeholder="예: BTC, ETH" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="10"></div>
 <div class="field"><label>매수가격</label><input type="number" id="b_buy" inputmode="decimal" step="any"></div>
 <div class="field"><label>매도가격</label><input type="number" id="b_sell" inputmode="decimal" step="any"></div>
 <div class="results">
@@ -95,7 +97,7 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 </div>
 
 <div class="panel" id="p2">
-<div class="field"><label>코인명</label><input type="text" id="c_coin" placeholder="예: BTC, ETH"></div>
+<div class="field"><label>코인명</label><input type="text" id="c_coin" class="coin" placeholder="예: BTC, ETH" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="10"></div>
 <div class="field"><label>현재 환율</label><input type="number" id="c_rate" inputmode="decimal" step="any"></div>
 <div class="field"><label>매수가격 (해외)</label><input type="number" id="c_buy" inputmode="decimal" step="any"></div>
 <div class="field"><label>매도가격 (KRW)</label><input type="number" id="c_sell" inputmode="decimal" step="any"></div>
@@ -140,6 +142,11 @@ function calcC(){
   setCls($('c_y'),y);setCls($('c_z'),z);
 }
 
+document.querySelectorAll('input.coin').forEach(i=>i.addEventListener('input',()=>{
+  const s=i.selectionStart;i.value=i.value.toUpperCase().replace(/[^A-Z]/g,'');
+  try{i.setSelectionRange(s,s)}catch{}
+}));
+
 ['a_buy','a_sell','a_rate'].forEach(i=>$(i).addEventListener('input',calcA));
 ['b_buy','b_sell'].forEach(i=>$(i).addEventListener('input',calcB));
 ['c_buy','c_sell','c_rate'].forEach(i=>$(i).addEventListener('input',calcC));
@@ -174,15 +181,27 @@ function render(i){
   c.innerHTML=keys.map(coin=>{
     const items=data[coin].map((e,idx)=>{
       const cls=e.m>=0?'pos':'neg';
-      return `<div class="hist-item"><span class="t">${e.t}</span><span>${fmt(e.buy,2)} → ${fmt(e.sell,2)}</span><span class="m ${cls}">${fmt(e.m,2)}%</span><button class="del" data-d="${i}" data-coin="${coin}" data-idx="${idx}">✕</button></div>`;
+      return `<div class="hist-item" data-load="${i}" data-coin="${coin}" data-idx="${idx}" title="클릭 시 이 값으로 불러오기"><span class="t">${e.t}</span><span>${fmt(e.buy,2)} → ${fmt(e.sell,2)}</span><span class="m ${cls}">${fmt(e.m,2)}%</span><button class="del" data-d="${i}" data-coin="${coin}" data-idx="${idx}">✕</button></div>`;
     }).join('');
     return `<div class="hist-group"><div class="hist-coin">${coin}</div>${items}</div>`;
   }).join('');
-  c.querySelectorAll('.del').forEach(b=>b.addEventListener('click',()=>{
+  c.querySelectorAll('.del').forEach(b=>b.addEventListener('click',ev=>{
+    ev.stopPropagation();
     const d=loadH(HK[b.dataset.d]);
     d[b.dataset.coin].splice(+b.dataset.idx,1);
     if(!d[b.dataset.coin].length)delete d[b.dataset.coin];
     saveH(HK[b.dataset.d],d);render(+b.dataset.d);
+  }));
+  c.querySelectorAll('.hist-item').forEach(it=>it.addEventListener('click',()=>{
+    const idx=+it.dataset.idx,ti=+it.dataset.load,coin=it.dataset.coin;
+    const e=loadH(HK[ti])[coin][idx];
+    const pre=['a','b','c'][ti];
+    $(pre+'_coin').value=coin;
+    $(pre+'_buy').value=e.buy;
+    $(pre+'_sell').value='';
+    if(ti===0||ti===2)$(pre+'_rate').value=e.rate!=null?e.rate:'';
+    [calcA,calcB,calcC][ti]();
+    $(pre+'_sell').focus();
   }));
 }
 
@@ -192,12 +211,15 @@ function doSave(i){
   if(!coin){alert('코인명을 입력하세요');$(pre+'_coin').focus();return}
   const buy=parseFloat($(pre+'_buy').value),sell=parseFloat($(pre+'_sell').value);
   let m;
-  if(i===0){const r=parseFloat($('a_rate').value);if(!isFinite(buy)||!isFinite(sell)||!isFinite(r)||r===0)return alert('값을 모두 입력하세요');const x=buy/r;m=(sell-x)/x*100}
+  let rate=null;
+  if(i===0){rate=parseFloat($('a_rate').value);if(!isFinite(buy)||!isFinite(sell)||!isFinite(rate)||rate===0)return alert('값을 모두 입력하세요');const x=buy/rate;m=(sell-x)/x*100}
   else if(i===1){if(!isFinite(buy)||!isFinite(sell)||buy===0)return alert('값을 모두 입력하세요');m=(sell-buy)/buy*100}
-  else{const r=parseFloat($('c_rate').value);if(!isFinite(buy)||!isFinite(sell)||!isFinite(r)||r===0)return alert('값을 모두 입력하세요');const x=buy*r;m=(sell-x)/x*100}
+  else{rate=parseFloat($('c_rate').value);if(!isFinite(buy)||!isFinite(sell)||!isFinite(rate)||rate===0)return alert('값을 모두 입력하세요');const x=buy*rate;m=(sell-x)/x*100}
   const d=loadH(HK[i]);
-  (d[coin]=d[coin]||[]).unshift({t:now(),buy,sell,m});
-  saveH(HK[i],d);render(i);
+  const arr=d[coin]||[];
+  arr.unshift({t:now(),buy,sell,m,rate});
+  delete d[coin];
+  saveH(HK[i],{[coin]:arr,...d});render(i);
 }
 
 document.querySelectorAll('.save').forEach(b=>b.addEventListener('click',()=>doSave(+b.dataset.s)));
