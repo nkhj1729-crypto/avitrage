@@ -73,6 +73,10 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 .rate-btn:disabled{background:#9ca3af;cursor:wait}
 .rate-info{font-size:11px;color:#6b7280;margin-top:4px;min-height:14px}
 .rate-info.err{color:#dc2626}
+.rate-src{display:flex;gap:4px;margin-top:6px}
+.src-btn{flex:0 0 auto;padding:4px 10px;border:1px solid #d1d5db;border-radius:14px;background:#fff;font-size:11px;font-weight:600;color:#6b7280;cursor:pointer;transition:all .1s}
+.src-btn:hover{background:#f3f4f6}
+.src-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
 .exch-group{margin-bottom:12px}
 .exch-label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:#6b7280}
 .exch-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;justify-items:center}
@@ -95,7 +99,7 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 <div class="panel active" id="p0">
 <div class="exch-group"><div class="exch-label">매수 거래소</div><div class="exch-chips" data-group="a_buyex"></div></div>
 <div class="field"><label>코인명</label><input type="text" id="a_coin" class="coin" placeholder="예: BTC, ETH" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="10"></div>
-<div class="field"><label>현재 환율 (USD/KRW)</label><div class="rate-row"><input type="number" id="a_rate" inputmode="decimal" step="any"><button type="button" class="rate-btn" data-fetch="a">실시간</button></div><div class="rate-info" id="a_rate_info"></div></div>
+<div class="field"><label>현재 환율 (USD/KRW)</label><div class="rate-row"><input type="number" id="a_rate" inputmode="decimal" step="any"><button type="button" class="rate-btn" data-fetch="a">실시간</button></div><div class="rate-src" data-src-group="a"><button type="button" class="src-btn active" data-src="upbit">업비트</button><button type="button" class="src-btn" data-src="bithumb">빗썸</button></div><div class="rate-info" id="a_rate_info"></div></div>
 <div class="field"><label>매수가격 (KRW)</label><input type="number" id="a_buy" inputmode="decimal" step="any"></div>
 <div class="exch-group"><div class="exch-label">매도 거래소</div><div class="exch-chips" data-group="a_sellex"></div></div>
 <div class="field"><label>매도가격</label><input type="number" id="a_sell" inputmode="decimal" step="any"></div>
@@ -125,7 +129,7 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 <div class="panel" id="p2">
 <div class="exch-group"><div class="exch-label">매수 거래소</div><div class="exch-chips" data-group="c_buyex"></div></div>
 <div class="field"><label>코인명</label><input type="text" id="c_coin" class="coin" placeholder="예: BTC, ETH" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="10"></div>
-<div class="field"><label>현재 환율 (USD/KRW)</label><div class="rate-row"><input type="number" id="c_rate" inputmode="decimal" step="any"><button type="button" class="rate-btn" data-fetch="c">실시간</button></div><div class="rate-info" id="c_rate_info"></div></div>
+<div class="field"><label>현재 환율 (USD/KRW)</label><div class="rate-row"><input type="number" id="c_rate" inputmode="decimal" step="any"><button type="button" class="rate-btn" data-fetch="c">실시간</button></div><div class="rate-src" data-src-group="c"><button type="button" class="src-btn active" data-src="upbit">업비트</button><button type="button" class="src-btn" data-src="bithumb">빗썸</button></div><div class="rate-info" id="c_rate_info"></div></div>
 <div class="field"><label>매수가격 (해외)</label><input type="number" id="c_buy" inputmode="decimal" step="any"></div>
 <div class="exch-group"><div class="exch-label">매도 거래소</div><div class="exch-chips" data-group="c_sellex"></div></div>
 <div class="field"><label>매도가격 (KRW)</label><input type="number" id="c_sell" inputmode="decimal" step="any"></div>
@@ -232,7 +236,11 @@ function render(i){
   c.innerHTML=keys.map(coin=>{
     const items=data[coin].map((e,idx)=>{
       const cls=e.m>=0?'pos':'neg';
-      return `<div class="hist-item" data-load="${i}" data-coin="${coin}" data-idx="${idx}" title="클릭 시 이 값으로 불러오기"><span class="t">${e.t}</span><div class="hist-trade"><div class="hist-leg"><span class="lbl">매수</span><span class="ex">${e.buyEx||'-'}</span><span class="px">${fmt(e.buy,2)}</span></div><div class="hist-leg"><span class="lbl">매도</span><span class="ex">${e.sellEx||'-'}</span><span class="px">${fmt(e.sell,2)}</span></div></div><span class="m ${cls}">${fmt(e.m,2)}%</span><button class="del" data-d="${i}" data-coin="${coin}" data-idx="${idx}">✕</button></div>`;
+      let buyTxt;
+      if(i===0){const usd=e.rate?e.buy/e.rate:null;buyTxt=`${fmt(e.buy,0)}`+(usd!=null?` (${fmt(usd,2)})`:'')}
+      else if(i===2){const krw=e.rate?e.buy*e.rate:null;buyTxt=(krw!=null?`${fmt(krw,0)} `:'')+`(${fmt(e.buy,2)})`}
+      else{buyTxt=fmt(e.buy,2)}
+      return `<div class="hist-item" data-load="${i}" data-coin="${coin}" data-idx="${idx}" title="클릭 시 이 값으로 불러오기"><span class="t">${e.t}</span><div class="hist-trade"><div class="hist-leg"><span class="lbl">매수</span><span class="ex">${e.buyEx||'-'}</span><span class="px">${buyTxt}</span></div><div class="hist-leg"><span class="lbl">매도</span><span class="ex">${e.sellEx||'-'}</span><span class="px">${fmt(e.sell,2)}</span></div></div><span class="m ${cls}">${fmt(e.m,2)}%</span><button class="del" data-d="${i}" data-coin="${coin}" data-idx="${idx}">✕</button></div>`;
     }).join('');
     return `<div class="hist-group"><div class="hist-coin">${coin}</div>${items}</div>`;
   }).join('');
@@ -284,30 +292,34 @@ document.querySelectorAll('.hist-clear').forEach(b=>b.addEventListener('click',(
 
 [0,1,2].forEach(render);
 
-async function fetchRate(){
-  const urls=[
-    {u:'https://api.upbit.com/v1/ticker?markets=KRW-USDT',p:d=>Array.isArray(d)&&d[0]&&d[0].trade_price},
-    {u:'https://api.bithumb.com/public/ticker/USDT_KRW',p:d=>d&&d.data&&parseFloat(d.data.closing_price)}
-  ];
-  for(const s of urls){
+const RATE_SRC={
+  upbit:{u:'https://api.upbit.com/v1/ticker?markets=KRW-USDT',p:d=>Array.isArray(d)&&d[0]&&d[0].trade_price,label:'업비트'},
+  bithumb:{u:'https://api.bithumb.com/public/ticker/USDT_KRW',p:d=>d&&d.data&&parseFloat(d.data.closing_price),label:'빗썸'}
+};
+async function fetchRate(src){
+  const primary=RATE_SRC[src]||RATE_SRC.upbit;
+  const fallback=src==='upbit'?RATE_SRC.bithumb:RATE_SRC.upbit;
+  for(const s of [primary,fallback]){
     try{
       const r=await fetch(s.u,{cache:'no-store'});
       if(!r.ok)continue;
       const d=await r.json();
       const rate=s.p(d);
-      if(rate&&isFinite(rate))return{rate};
+      if(rate&&isFinite(rate))return{rate,label:s.label};
     }catch{}
   }
   throw new Error('환율 조회 실패');
 }
 
-function applyRate(pre,rate,info){
+const getSrc=pre=>{const a=document.querySelector(`[data-src-group="${pre}"] .src-btn.active`);return a?a.dataset.src:'upbit'};
+
+function applyRate(pre,rate,label){
   $(pre+'_rate').value=rate.toFixed(2);
   const now=new Date();
   const hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
   const el=$(pre+'_rate_info');
   el.classList.remove('err');
-  el.textContent=`USD/KRW ${rate.toFixed(2)} · 갱신 ${hm}`;
+  el.textContent=`${label||''} USD/KRW ${rate.toFixed(2)} · 갱신 ${hm}`;
   (pre==='a'?calcA:calcC)();
 }
 
@@ -317,10 +329,8 @@ async function loadRate(pre,silent){
   if(btn){btn.disabled=true;btn.textContent='...'}
   if(!silent){el.classList.remove('err');el.textContent='불러오는 중...'}
   try{
-    const{rate}=await fetchRate();
-    applyRate(pre,rate);
-    const other=pre==='a'?'c':'a';
-    if(!$(other+'_rate').value)applyRate(other,rate);
+    const{rate,label}=await fetchRate(getSrc(pre));
+    applyRate(pre,rate,label);
   }catch(e){
     el.classList.add('err');
     el.textContent='환율 조회 실패 (수동 입력)';
@@ -330,6 +340,14 @@ async function loadRate(pre,silent){
 }
 
 document.querySelectorAll('.rate-btn').forEach(b=>b.addEventListener('click',()=>loadRate(b.dataset.fetch)));
+document.querySelectorAll('.rate-src').forEach(g=>{
+  g.addEventListener('click',ev=>{
+    const b=ev.target.closest('.src-btn');if(!b)return;
+    g.querySelectorAll('.src-btn').forEach(c=>c.classList.remove('active'));
+    b.classList.add('active');
+    loadRate(g.dataset.srcGroup);
+  });
+});
 
 document.querySelectorAll('.row .v').forEach(v=>v.addEventListener('dblclick',async()=>{
   const txt=v.textContent.replace(/%$/,'').replace(/,/g,'').trim();
@@ -342,6 +360,7 @@ document.querySelectorAll('.row .v').forEach(v=>v.addEventListener('dblclick',as
 }));
 
 loadRate('a');
+loadRate('c');
 </script>
 </body>
 </html>
