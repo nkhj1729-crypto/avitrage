@@ -23,10 +23,23 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 .tab.active{background:#fff;color:#2563eb;border-bottom:2px solid #2563eb}
 .panel{display:none;padding:20px}
 .panel.active{display:block}
+.subtabs{display:flex;gap:4px;background:#f3f4f6;border-radius:8px;padding:4px;margin-bottom:14px}
+.subtab{flex:1;padding:8px;cursor:pointer;background:transparent;border:none;font-size:13px;font-weight:600;color:#6b7280;border-radius:6px;transition:all .1s}
+.subtab.active{background:#fff;color:#2563eb;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.subpanel{display:none}
+.subpanel.active{display:block}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#374151}
 .field input{width:100%;padding:10px 12px;font-size:16px;border:1px solid #d1d5db;border-radius:6px;outline:none}
 .field input:focus{border-color:#2563eb}
+.field input[readonly]{background:#f3f4f6;color:#374151;cursor:copy;user-select:all}
+.field input[readonly].copied{background:#dcfce7;color:#16a34a}
+.field-row{display:flex;gap:8px;margin-bottom:14px}
+.field-row .field{flex:1;margin-bottom:0}
+.sec{padding:12px;border-radius:8px;margin-bottom:14px}
+.sec>:last-child{margin-bottom:0}
+.sec.buy{background:#eff6ff}
+.sec.sell{background:#fef2f2}
 .field input.coin{text-transform:uppercase;letter-spacing:1px;font-weight:700}
 .results{margin-top:18px;padding:14px;background:#f9fafb;border-radius:6px}
 .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:15px}
@@ -80,6 +93,9 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 .exch-group{margin-bottom:12px}
 .exch-label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:#6b7280}
 .exch-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;justify-items:center}
+.exch-chips.compact{gap:4px}
+.exch-chips.compact .chip{width:32px;height:32px;padding:5px}
+.exch-chips.compact .chip img{width:18px;height:18px}
 .chip{display:inline-flex;align-items:center;justify-content:center;padding:7px;border:1px solid #d1d5db;border-radius:50%;background:#fff;cursor:pointer;transition:all .1s;width:36px;height:36px}
 .chip img{width:20px;height:20px;border-radius:50%;background:#f3f4f6;object-fit:cover}
 .chip:hover{background:#f3f4f6}
@@ -92,51 +108,97 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 <h1>마진 계산기</h1>
 <div class="tabs">
 <button class="tab active" data-t="0">한국→해외</button>
-<button class="tab" data-t="1">해외→해외</button>
+<button class="tab" data-t="1">동일지역</button>
 <button class="tab" data-t="2">해외→한국</button>
 </div>
 
 <div class="panel active" id="p0">
-<div class="exch-group"><div class="exch-label">매수 거래소</div><div class="exch-chips" data-group="a_buyex"></div></div>
 <div class="field"><label>코인명</label><input type="text" id="a_coin" class="coin" placeholder="예: BTC, ETH" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="10"></div>
 <div class="field"><label>현재 환율 (USD/KRW)</label><div class="rate-row"><input type="number" id="a_rate" inputmode="decimal" step="any"><button type="button" class="rate-btn" data-fetch="a">실시간</button></div><div class="rate-src" data-src-group="a"><button type="button" class="src-btn active" data-src="upbit">업비트</button><button type="button" class="src-btn" data-src="bithumb">빗썸</button></div><div class="rate-info" id="a_rate_info"></div></div>
+<div class="sec buy">
+<div class="exch-group"><div class="exch-label">매수 거래소</div><div class="exch-chips" data-group="a_buyex" data-filter="kr"></div></div>
 <div class="field"><label>매수가격 (KRW)</label><input type="number" id="a_buy" inputmode="decimal" step="any"></div>
-<div class="exch-group"><div class="exch-label">매도 거래소</div><div class="exch-chips" data-group="a_sellex"></div></div>
+<div class="field-row"><div class="field"><label>수량</label><input type="number" id="a_qty" inputmode="decimal" step="any"></div><div class="field"><label>총액 (KRW)</label><input type="text" id="a_total" readonly></div></div>
+</div>
+<div class="sec sell">
+<div class="exch-group"><div class="exch-label">매도 거래소</div><div class="exch-chips" data-group="a_sellex" data-filter="ov"></div></div>
 <div class="field"><label>매도가격</label><input type="number" id="a_sell" inputmode="decimal" step="any"></div>
+<div class="field-row"><div class="field"><label>수량</label><input type="number" id="a_sqty" inputmode="decimal" step="any"></div><div class="field"><label>총액 (KRW)</label><input type="text" id="a_stotal" readonly></div></div>
+</div>
 <div class="results">
 <div class="row"><span class="k">x (매수/환율)</span><span class="v" id="a_x">-</span></div>
 <div class="row"><span class="k">y (매도-x)</span><span class="v" id="a_y">-</span></div>
 <div class="row hi"><span class="k">z 마진율(%)</span><span class="v" id="a_z">-</span></div>
+<div class="row"><span class="k">차액 (매도-매수)</span><span class="v" id="a_diff">-</span></div>
 </div>
 <div class="btns"><button class="save" data-s="0">기록 저장</button><button class="reset" data-r="0">초기화</button></div>
 <div class="hist"><div class="hist-head"><h3>기록</h3><button class="hist-clear" data-c="0">전체 삭제</button></div><div id="h0"></div></div>
 </div>
 
 <div class="panel" id="p1">
-<div class="exch-group"><div class="exch-label">매수 거래소</div><div class="exch-chips" data-group="b_buyex"></div></div>
+<div class="subtabs"><button class="subtab active" data-st="b">국내</button><button class="subtab" data-st="d">해외</button></div>
+<div class="subpanel active" id="sp_b">
 <div class="field"><label>코인명</label><input type="text" id="b_coin" class="coin" placeholder="예: BTC, ETH" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="10"></div>
+<div class="field"><label>현재 환율 (USD/KRW)</label><div class="rate-row"><input type="number" id="b_rate" inputmode="decimal" step="any"><button type="button" class="rate-btn" data-fetch="b">실시간</button></div><div class="rate-src" data-src-group="b"><button type="button" class="src-btn active" data-src="upbit">업비트</button><button type="button" class="src-btn" data-src="bithumb">빗썸</button></div><div class="rate-info" id="b_rate_info"></div></div>
+<div class="sec buy">
+<div class="exch-group"><div class="exch-label">매수 거래소</div><div class="exch-chips" data-group="b_buyex" data-filter="kr"></div></div>
 <div class="field"><label>매수가격</label><input type="number" id="b_buy" inputmode="decimal" step="any"></div>
-<div class="exch-group"><div class="exch-label">매도 거래소</div><div class="exch-chips" data-group="b_sellex"></div></div>
+<div class="field-row"><div class="field"><label>수량</label><input type="number" id="b_qty" inputmode="decimal" step="any"></div><div class="field"><label>총액 (KRW)</label><input type="text" id="b_total" readonly></div></div>
+</div>
+<div class="sec sell">
+<div class="exch-group"><div class="exch-label">매도 거래소</div><div class="exch-chips" data-group="b_sellex" data-filter="kr"></div></div>
 <div class="field"><label>매도가격</label><input type="number" id="b_sell" inputmode="decimal" step="any"></div>
+<div class="field-row"><div class="field"><label>수량</label><input type="number" id="b_sqty" inputmode="decimal" step="any"></div><div class="field"><label>총액 (KRW)</label><input type="text" id="b_stotal" readonly></div></div>
+</div>
 <div class="results">
 <div class="row"><span class="k">a (매도-매수)</span><span class="v" id="b_a">-</span></div>
 <div class="row hi"><span class="k">b 마진율(%)</span><span class="v" id="b_b">-</span></div>
+<div class="row"><span class="k">차액 (매도-매수)</span><span class="v" id="b_diff">-</span></div>
 </div>
 <div class="btns"><button class="save" data-s="1">기록 저장</button><button class="reset" data-r="1">초기화</button></div>
 <div class="hist"><div class="hist-head"><h3>기록</h3><button class="hist-clear" data-c="1">전체 삭제</button></div><div id="h1"></div></div>
 </div>
+<div class="subpanel" id="sp_d">
+<div class="field"><label>코인명</label><input type="text" id="d_coin" class="coin" placeholder="예: BTC, ETH" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="10"></div>
+<div class="field"><label>현재 환율 (USD/KRW)</label><div class="rate-row"><input type="number" id="d_rate" inputmode="decimal" step="any"><button type="button" class="rate-btn" data-fetch="d">실시간</button></div><div class="rate-src" data-src-group="d"><button type="button" class="src-btn active" data-src="upbit">업비트</button><button type="button" class="src-btn" data-src="bithumb">빗썸</button></div><div class="rate-info" id="d_rate_info"></div></div>
+<div class="sec buy">
+<div class="exch-group"><div class="exch-label">매수 거래소</div><div class="exch-chips" data-group="d_buyex" data-filter="ov"></div></div>
+<div class="field"><label>매수가격</label><input type="number" id="d_buy" inputmode="decimal" step="any"></div>
+<div class="field-row"><div class="field"><label>수량</label><input type="number" id="d_qty" inputmode="decimal" step="any"></div><div class="field"><label>총액 (KRW)</label><input type="text" id="d_total" readonly></div></div>
+</div>
+<div class="sec sell">
+<div class="exch-group"><div class="exch-label">매도 거래소</div><div class="exch-chips" data-group="d_sellex" data-filter="ov"></div></div>
+<div class="field"><label>매도가격</label><input type="number" id="d_sell" inputmode="decimal" step="any"></div>
+<div class="field-row"><div class="field"><label>수량</label><input type="number" id="d_sqty" inputmode="decimal" step="any"></div><div class="field"><label>총액 (KRW)</label><input type="text" id="d_stotal" readonly></div></div>
+</div>
+<div class="results">
+<div class="row"><span class="k">a (매도-매수)</span><span class="v" id="d_a">-</span></div>
+<div class="row hi"><span class="k">b 마진율(%)</span><span class="v" id="d_b">-</span></div>
+<div class="row"><span class="k">차액 (매도-매수)</span><span class="v" id="d_diff">-</span></div>
+</div>
+<div class="btns"><button class="save" data-s="3">기록 저장</button><button class="reset" data-r="3">초기화</button></div>
+<div class="hist"><div class="hist-head"><h3>기록</h3><button class="hist-clear" data-c="3">전체 삭제</button></div><div id="h3"></div></div>
+</div>
+</div>
 
 <div class="panel" id="p2">
-<div class="exch-group"><div class="exch-label">매수 거래소</div><div class="exch-chips" data-group="c_buyex"></div></div>
 <div class="field"><label>코인명</label><input type="text" id="c_coin" class="coin" placeholder="예: BTC, ETH" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="10"></div>
 <div class="field"><label>현재 환율 (USD/KRW)</label><div class="rate-row"><input type="number" id="c_rate" inputmode="decimal" step="any"><button type="button" class="rate-btn" data-fetch="c">실시간</button></div><div class="rate-src" data-src-group="c"><button type="button" class="src-btn active" data-src="upbit">업비트</button><button type="button" class="src-btn" data-src="bithumb">빗썸</button></div><div class="rate-info" id="c_rate_info"></div></div>
+<div class="sec buy">
+<div class="exch-group"><div class="exch-label">매수 거래소</div><div class="exch-chips" data-group="c_buyex" data-filter="ov"></div></div>
 <div class="field"><label>매수가격 (해외)</label><input type="number" id="c_buy" inputmode="decimal" step="any"></div>
-<div class="exch-group"><div class="exch-label">매도 거래소</div><div class="exch-chips" data-group="c_sellex"></div></div>
+<div class="field-row"><div class="field"><label>수량</label><input type="number" id="c_qty" inputmode="decimal" step="any"></div><div class="field"><label>총액 (KRW)</label><input type="text" id="c_total" readonly></div></div>
+</div>
+<div class="sec sell">
+<div class="exch-group"><div class="exch-label">매도 거래소</div><div class="exch-chips" data-group="c_sellex" data-filter="kr"></div></div>
 <div class="field"><label>매도가격 (KRW)</label><input type="number" id="c_sell" inputmode="decimal" step="any"></div>
+<div class="field-row"><div class="field"><label>수량</label><input type="number" id="c_sqty" inputmode="decimal" step="any"></div><div class="field"><label>총액 (KRW)</label><input type="text" id="c_stotal" readonly></div></div>
+</div>
 <div class="results">
 <div class="row"><span class="k">x (매수×환율)</span><span class="v" id="c_x">-</span></div>
 <div class="row"><span class="k">y (매도-x)</span><span class="v" id="c_y">-</span></div>
 <div class="row hi"><span class="k">z 마진율(%)</span><span class="v" id="c_z">-</span></div>
+<div class="row"><span class="k">차액 (매도-매수)</span><span class="v" id="c_diff">-</span></div>
 </div>
 <div class="btns"><button class="save" data-s="2">기록 저장</button><button class="reset" data-r="2">초기화</button></div>
 <div class="hist"><div class="hist-head"><h3>기록</h3><button class="hist-clear" data-c="2">전체 삭제</button></div><div id="h2"></div></div>
@@ -145,9 +207,9 @@ h1{padding:16px;font-size:18px;background:#2563eb;color:#fff;text-align:center}
 
 <script>
 const EXCHANGES=[
-  {n:'업비트',d:'upbit.com'},
-  {n:'빗썸',d:'bithumb.com'},
-  {n:'코인원',d:'coinone.co.kr'},
+  {n:'빗썸',d:'bithumb.com',kr:1},
+  {n:'업비트',d:'upbit.com',kr:1},
+  {n:'코인원',d:'coinone.co.kr',kr:1},
   {n:'비트겟',d:'bitget.com'},
   {n:'바이비트',d:'bybit.com'},
   {n:'바이낸스',d:'binance.com'},
@@ -158,34 +220,60 @@ const $=id=>document.getElementById(id);
 const fmt=(n,d=2)=>isFinite(n)?n.toLocaleString('ko-KR',{maximumFractionDigits:d,minimumFractionDigits:0}):'-';
 const setCls=(el,v)=>{el.parentElement.classList.remove('pos','neg');if(isFinite(v)){el.parentElement.classList.add(v>=0?'pos':'neg')}};
 
+function calcDiff(pre,bt,st){
+  const el=$(pre+'_diff');
+  if(!isFinite(bt)||!isFinite(st)){el.textContent='-';el.parentElement.classList.remove('pos','neg');return}
+  const d=st-bt;el.textContent=fmt(d,2);setCls(el,d);
+}
 function calcA(){
   const buy=parseFloat($('a_buy').value),sell=parseFloat($('a_sell').value),rate=parseFloat($('a_rate').value);
-  if(!isFinite(buy)||!isFinite(rate)||rate===0){$('a_x').textContent='-';$('a_y').textContent='-';$('a_z').textContent='-';return}
+  const qty=parseFloat($('a_qty').value),sqty=parseFloat($('a_sqty').value);
+  if(!isFinite(buy)||!isFinite(rate)||rate===0){$('a_x').textContent='-';$('a_y').textContent='-';$('a_z').textContent='-';calcDiff('a',NaN,NaN);return}
   const x=buy/rate;$('a_x').textContent=fmt(x,4);
-  if(!isFinite(sell)){$('a_y').textContent='-';$('a_z').textContent='-';return}
+  if(!isFinite(sell)){$('a_y').textContent='-';$('a_z').textContent='-';calcDiff('a',NaN,NaN);return}
   const y=sell-x,z=y/x*100;
   $('a_y').textContent=fmt(y,4);$('a_z').textContent=fmt(z,2)+'%';
   setCls($('a_y'),y);setCls($('a_z'),z);
+  calcDiff('a',buy*qty,sell*sqty*rate);
 }
 function calcB(){
   const buy=parseFloat($('b_buy').value),sell=parseFloat($('b_sell').value);
-  if(!isFinite(buy)||!isFinite(sell)||buy===0){$('b_a').textContent='-';$('b_b').textContent='-';return}
+  const qty=parseFloat($('b_qty').value),sqty=parseFloat($('b_sqty').value);
+  if(!isFinite(buy)||!isFinite(sell)||buy===0){$('b_a').textContent='-';$('b_b').textContent='-';calcDiff('b',NaN,NaN);return}
   const a=sell-buy,b=a/buy*100;
   $('b_a').textContent=fmt(a,4);$('b_b').textContent=fmt(b,2)+'%';
   setCls($('b_a'),a);setCls($('b_b'),b);
+  calcDiff('b',buy*qty,sell*sqty);
+}
+function calcD(){
+  const buy=parseFloat($('d_buy').value),sell=parseFloat($('d_sell').value);
+  const qty=parseFloat($('d_qty').value),sqty=parseFloat($('d_sqty').value);
+  const rate=parseFloat($('d_rate').value);
+  if(!isFinite(buy)||!isFinite(sell)||buy===0){$('d_a').textContent='-';$('d_b').textContent='-';calcDiff('d',NaN,NaN);return}
+  const a=sell-buy,b=a/buy*100;
+  $('d_a').textContent=fmt(a,4);$('d_b').textContent=fmt(b,2)+'%';
+  setCls($('d_a'),a);setCls($('d_b'),b);
+  const r=isFinite(rate)?rate:1;
+  calcDiff('d',buy*qty*r,sell*sqty*r);
 }
 function calcC(){
   const rate=parseFloat($('c_rate').value),buy=parseFloat($('c_buy').value),sell=parseFloat($('c_sell').value);
-  if(!isFinite(buy)||!isFinite(rate)||rate===0){$('c_x').textContent='-';$('c_y').textContent='-';$('c_z').textContent='-';return}
+  const qty=parseFloat($('c_qty').value),sqty=parseFloat($('c_sqty').value);
+  if(!isFinite(buy)||!isFinite(rate)||rate===0){$('c_x').textContent='-';$('c_y').textContent='-';$('c_z').textContent='-';calcDiff('c',NaN,NaN);return}
   const x=buy*rate;$('c_x').textContent=fmt(x,4);
-  if(!isFinite(sell)){$('c_y').textContent='-';$('c_z').textContent='-';return}
+  if(!isFinite(sell)){$('c_y').textContent='-';$('c_z').textContent='-';calcDiff('c',NaN,NaN);return}
   const y=sell-x,z=y/x*100;
   $('c_y').textContent=fmt(y,4);$('c_z').textContent=fmt(z,2)+'%';
   setCls($('c_y'),y);setCls($('c_z'),z);
+  calcDiff('c',buy*qty*rate,sell*sqty);
 }
 
 document.querySelectorAll('.exch-chips').forEach(g=>{
-  g.innerHTML=EXCHANGES.map(e=>`<button type="button" class="chip" data-v="${e.n}" title="${e.n}" aria-label="${e.n}"><img src="https://www.google.com/s2/favicons?domain=${e.d}&sz=64" alt="${e.n}" loading="lazy"></button>`).join('');
+  const f=g.dataset.filter;
+  const list=EXCHANGES.filter(e=>f==='kr'?e.kr:f==='ov'?!e.kr:true);
+  g.style.gridTemplateColumns=`repeat(${list.length},1fr)`;
+  if(list.length>=7)g.classList.add('compact');
+  g.innerHTML=list.map(e=>`<button type="button" class="chip" tabindex="-1" data-v="${e.n}" title="${e.n}" aria-label="${e.n}"><img src="https://www.google.com/s2/favicons?domain=${e.d}&sz=64" alt="${e.n}" loading="lazy"></button>`).join('');
   g.addEventListener('click',ev=>{
     const b=ev.target.closest('.chip');if(!b)return;
     const on=b.classList.contains('active');
@@ -201,27 +289,48 @@ document.querySelectorAll('input.coin').forEach(i=>i.addEventListener('input',()
   try{i.setSelectionRange(s,s)}catch{}
 }));
 
+function calcTotal(pre,side){
+  const px=parseFloat($(pre+(side==='s'?'_sell':'_buy')).value),qty=parseFloat($(pre+(side==='s'?'_sqty':'_qty')).value);
+  const out=$(pre+(side==='s'?'_stotal':'_total'));
+  if(!isFinite(px)||!isFinite(qty)){out.value='';return}
+  let v=px*qty;
+  let krw=false;
+  if(pre==='a'&&side==='s'){const r=parseFloat($('a_rate').value);if(isFinite(r)){v*=r;krw=true}else{out.value='';return}}
+  if(pre==='c'&&side==='b'){const r=parseFloat($('c_rate').value);if(isFinite(r)){v*=r;krw=true}else{out.value='';return}}
+  if(pre==='d'){const r=parseFloat($('d_rate').value);if(isFinite(r)){v*=r;krw=true}else{out.value='';return}}
+  out.value=fmt(v,krw?0:4);
+}
 ['a_buy','a_sell','a_rate'].forEach(i=>$(i).addEventListener('input',calcA));
+$('a_rate').addEventListener('input',()=>calcTotal('a','s'));
 ['b_buy','b_sell'].forEach(i=>$(i).addEventListener('input',calcB));
+['d_buy','d_sell'].forEach(i=>$(i).addEventListener('input',calcD));
+$('d_rate').addEventListener('input',()=>{calcTotal('d','b');calcTotal('d','s');calcD()});
 ['c_buy','c_sell','c_rate'].forEach(i=>$(i).addEventListener('input',calcC));
+$('c_rate').addEventListener('input',()=>calcTotal('c','b'));
+['a','b','c','d'].forEach(p=>{
+  const cf=[calcA,calcB,calcC,calcD]['abcd'.indexOf(p)];
+  ['_buy','_qty'].forEach(s=>$(p+s).addEventListener('input',()=>{calcTotal(p,'b');cf()}));
+  ['_sell','_sqty'].forEach(s=>$(p+s).addEventListener('input',()=>{calcTotal(p,'s');cf()}));
+});
 
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
   t.classList.add('active');
-  $('p'+t.dataset.t).classList.add('active');
-  $('p'+t.dataset.t).querySelector('input').focus();
+  const p=$('p'+t.dataset.t);p.classList.add('active');
+  const target=p.querySelector('.subpanel.active')||p;
+  const inp=target.querySelector('input');if(inp)inp.focus();
 }));
 
 document.querySelectorAll('.reset').forEach(b=>b.addEventListener('click',()=>{
-  const p=$('p'+b.dataset.r);
+  const p=b.closest('.subpanel')||b.closest('.panel');
   p.querySelectorAll('input').forEach(i=>{if(i.type!=='text')i.value=''});
   p.querySelectorAll('.v').forEach(v=>{v.textContent='-';v.parentElement.classList.remove('pos','neg')});
   p.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
   p.querySelector('input').focus();
 }));
 
-const HK=['hist_a','hist_b','hist_c'];
+const HK=['hist_a','hist_b','hist_c','hist_d'];
 const mem={};
 let useSS=true;try{sessionStorage.setItem('__t','1');sessionStorage.removeItem('__t')}catch{useSS=false}
 const loadH=k=>{if(!useSS)return mem[k]||{};try{return JSON.parse(sessionStorage.getItem(k))||{}}catch{return mem[k]||{}}};
@@ -236,11 +345,12 @@ function render(i){
   c.innerHTML=keys.map(coin=>{
     const items=data[coin].map((e,idx)=>{
       const cls=e.m>=0?'pos':'neg';
+      const r=parseFloat(e.rate),b=parseFloat(e.buy);
       let buyTxt;
-      if(i===0){const usd=e.rate?e.buy/e.rate:null;buyTxt=`${fmt(e.buy,0)}`+(usd!=null?` (${fmt(usd,2)})`:'')}
-      else if(i===2){const krw=e.rate?e.buy*e.rate:null;buyTxt=(krw!=null?`${fmt(krw,0)} `:'')+`(${fmt(e.buy,2)})`}
-      else{buyTxt=fmt(e.buy,2)}
-      return `<div class="hist-item" data-load="${i}" data-coin="${coin}" data-idx="${idx}" title="클릭 시 이 값으로 불러오기"><span class="t">${e.t}</span><div class="hist-trade"><div class="hist-leg"><span class="lbl">매수</span><span class="ex">${e.buyEx||'-'}</span><span class="px">${buyTxt}</span></div><div class="hist-leg"><span class="lbl">매도</span><span class="ex">${e.sellEx||'-'}</span><span class="px">${fmt(e.sell,2)}</span></div></div><span class="m ${cls}">${fmt(e.m,2)}%</span><button class="del" data-d="${i}" data-coin="${coin}" data-idx="${idx}">✕</button></div>`;
+      if(i===0){const usd=isFinite(r)&&r?b/r:null;buyTxt=`${e.buy}`+(usd!=null?` (${fmt(usd,4)})`:'')}
+      else if(i===2){const krw=isFinite(r)&&r?b*r:null;buyTxt=(krw!=null?`${fmt(krw,2)} `:'')+`(${e.buy})`}
+      else{buyTxt=e.buy}
+      return `<div class="hist-item" data-load="${i}" data-coin="${coin}" data-idx="${idx}" title="클릭 시 이 값으로 불러오기"><span class="t">${e.t}</span><div class="hist-trade"><div class="hist-leg"><span class="lbl">매수</span><span class="ex">${e.buyEx||'-'}</span><span class="px">${buyTxt}</span></div><div class="hist-leg"><span class="lbl">매도</span><span class="ex">${e.sellEx||'-'}</span><span class="px">${e.sell}</span></div></div><span class="m ${cls}">${fmt(e.m,2)}%</span><button class="del" data-d="${i}" data-coin="${coin}" data-idx="${idx}">✕</button></div>`;
     }).join('');
     return `<div class="hist-group"><div class="hist-coin">${coin}</div>${items}</div>`;
   }).join('');
@@ -254,32 +364,34 @@ function render(i){
   c.querySelectorAll('.hist-item').forEach(it=>it.addEventListener('click',()=>{
     const idx=+it.dataset.idx,ti=+it.dataset.load,coin=it.dataset.coin;
     const e=loadH(HK[ti])[coin][idx];
-    const pre=['a','b','c'][ti];
+    const pre=['a','b','c','d'][ti];
     $(pre+'_coin').value=coin;
     $(pre+'_buy').value=e.buy;
     $(pre+'_sell').value='';
-    if(ti===0||ti===2)$(pre+'_rate').value=e.rate!=null?e.rate:'';
+    if(ti===0||ti===2||ti===3)$(pre+'_rate').value=e.rate!=null?e.rate:'';
     setEx(pre+'_buyex',e.buyEx||'');
     setEx(pre+'_sellex',e.sellEx||'');
-    [calcA,calcB,calcC][ti]();
+    [calcA,calcB,calcC,calcD][ti]();
     $(pre+'_sell').focus();
   }));
 }
 
 function doSave(i){
-  const pre=['a','b','c'][i];
+  const pre=['a','b','c','d'][i];
   const coin=($(pre+'_coin').value||'').trim().toUpperCase();
   if(!coin){alert('코인명을 입력하세요');$(pre+'_coin').focus();return}
-  const buy=parseFloat($(pre+'_buy').value),sell=parseFloat($(pre+'_sell').value);
+  const buyStr=($(pre+'_buy').value||'').trim(),sellStr=($(pre+'_sell').value||'').trim();
+  const buy=parseFloat(buyStr),sell=parseFloat(sellStr);
   let m;
-  let rate=null;
-  if(i===0){rate=parseFloat($('a_rate').value);if(!isFinite(buy)||!isFinite(sell)||!isFinite(rate)||rate===0)return alert('값을 모두 입력하세요');const x=buy/rate;m=(sell-x)/x*100}
+  let rate=null,rateStr=null;
+  if(i===0){rateStr=($('a_rate').value||'').trim();rate=parseFloat(rateStr);if(!isFinite(buy)||!isFinite(sell)||!isFinite(rate)||rate===0)return alert('값을 모두 입력하세요');const x=buy/rate;m=(sell-x)/x*100}
   else if(i===1){if(!isFinite(buy)||!isFinite(sell)||buy===0)return alert('값을 모두 입력하세요');m=(sell-buy)/buy*100}
-  else{rate=parseFloat($('c_rate').value);if(!isFinite(buy)||!isFinite(sell)||!isFinite(rate)||rate===0)return alert('값을 모두 입력하세요');const x=buy*rate;m=(sell-x)/x*100}
+  else if(i===3){rateStr=($('d_rate').value||'').trim();rate=parseFloat(rateStr);if(!isFinite(buy)||!isFinite(sell)||buy===0)return alert('값을 모두 입력하세요');m=(sell-buy)/buy*100}
+  else{rateStr=($('c_rate').value||'').trim();rate=parseFloat(rateStr);if(!isFinite(buy)||!isFinite(sell)||!isFinite(rate)||rate===0)return alert('값을 모두 입력하세요');const x=buy*rate;m=(sell-x)/x*100}
   const buyEx=getEx(pre+'_buyex'),sellEx=getEx(pre+'_sellex');
   const d=loadH(HK[i]);
   const arr=d[coin]||[];
-  arr.unshift({t:now(),buy,sell,m,rate,buyEx,sellEx});
+  arr.unshift({t:now(),buy:buyStr,sell:sellStr,m,rate:rateStr,buyEx,sellEx});
   delete d[coin];
   saveH(HK[i],{[coin]:arr,...d});render(i);
 }
@@ -290,7 +402,15 @@ document.querySelectorAll('.hist-clear').forEach(b=>b.addEventListener('click',(
   delH(HK[+b.dataset.c]);render(+b.dataset.c);
 }));
 
-[0,1,2].forEach(render);
+[0,1,2,3].forEach(render);
+document.querySelectorAll('.subtab').forEach(t=>t.addEventListener('click',()=>{
+  const p=t.parentElement.parentElement;
+  p.querySelectorAll('.subtab').forEach(x=>x.classList.remove('active'));
+  p.querySelectorAll('.subpanel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  $('sp_'+t.dataset.st).classList.add('active');
+  $('sp_'+t.dataset.st).querySelector('input').focus();
+}));
 
 const RATE_SRC={
   upbit:{u:'https://api.upbit.com/v1/ticker?markets=KRW-USDT',p:d=>Array.isArray(d)&&d[0]&&d[0].trade_price,label:'업비트'},
@@ -320,7 +440,10 @@ function applyRate(pre,rate,label){
   const el=$(pre+'_rate_info');
   el.classList.remove('err');
   el.textContent=`${label||''} USD/KRW ${rate.toFixed(2)} · 갱신 ${hm}`;
-  (pre==='a'?calcA:calcC)();
+  ({a:calcA,b:calcB,c:calcC,d:calcD}[pre])();
+  if(pre==='a')calcTotal('a','s');
+  if(pre==='c')calcTotal('c','b');
+  if(pre==='d'){calcTotal('d','b');calcTotal('d','s')}
 }
 
 async function loadRate(pre,silent){
@@ -349,18 +472,28 @@ document.querySelectorAll('.rate-src').forEach(g=>{
   });
 });
 
-document.querySelectorAll('.row .v').forEach(v=>v.addEventListener('dblclick',async()=>{
-  const txt=v.textContent.replace(/%$/,'').replace(/,/g,'').trim();
-  if(!txt||txt==='-')return;
+async function copyText(txt){
   try{
     if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(txt)}
     else{const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta)}
-    v.classList.add('copied');setTimeout(()=>v.classList.remove('copied'),600);
-  }catch{}
+    return true;
+  }catch{return false}
+}
+document.querySelectorAll('.row .v').forEach(v=>v.addEventListener('dblclick',async()=>{
+  const txt=v.textContent.replace(/%$/,'').replace(/,/g,'').trim();
+  if(!txt||txt==='-')return;
+  if(await copyText(txt)){v.classList.add('copied');setTimeout(()=>v.classList.remove('copied'),600)}
+}));
+document.querySelectorAll('input[readonly]').forEach(i=>i.addEventListener('dblclick',async()=>{
+  const txt=(i.value||'').replace(/,/g,'').trim();
+  if(!txt)return;
+  if(await copyText(txt)){i.classList.add('copied');setTimeout(()=>i.classList.remove('copied'),600)}
 }));
 
 loadRate('a');
+loadRate('b');
 loadRate('c');
+loadRate('d');
 </script>
 </body>
 </html>
