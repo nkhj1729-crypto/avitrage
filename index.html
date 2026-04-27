@@ -284,6 +284,21 @@ document.querySelectorAll('.exch-chips').forEach(g=>{
 const getEx=g=>{const a=document.querySelector(`[data-group="${g}"] .chip.active`);return a?a.dataset.v:''};
 const setEx=(g,v)=>{document.querySelectorAll(`[data-group="${g}"] .chip`).forEach(c=>c.classList.toggle('active',c.dataset.v===v))};
 
+function smartStep(inp,dir){
+  const v=(inp.value||'').trim();if(!v)return;
+  const m=v.match(/\.(\d+)$/);
+  const dec=m?m[1].length:0;
+  const cur=parseFloat(v);if(!isFinite(cur))return;
+  const step=Math.pow(10,-dec);
+  inp.value=(cur+dir*step).toFixed(dec);
+  inp.dispatchEvent(new Event('input',{bubbles:true}));
+}
+['a','b','c','d'].forEach(p=>['_buy','_sell'].forEach(s=>{
+  const inp=$(p+s);
+  inp.addEventListener('keydown',ev=>{
+    if(ev.key==='ArrowUp'||ev.key==='ArrowDown'){ev.preventDefault();smartStep(inp,ev.key==='ArrowUp'?1:-1)}
+  });
+}));
 document.querySelectorAll('input.coin').forEach(i=>i.addEventListener('input',()=>{
   const s=i.selectionStart;i.value=i.value.toUpperCase().replace(/[^A-Z]/g,'');
   try{i.setSelectionRange(s,s)}catch{}
