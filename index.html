@@ -284,20 +284,27 @@ document.querySelectorAll('.exch-chips').forEach(g=>{
 const getEx=g=>{const a=document.querySelector(`[data-group="${g}"] .chip.active`);return a?a.dataset.v:''};
 const setEx=(g,v)=>{document.querySelectorAll(`[data-group="${g}"] .chip`).forEach(c=>c.classList.toggle('active',c.dataset.v===v))};
 
+function readDec(v){const m=(v||'').match(/\.(\d+)$/);return m?m[1].length:0}
+let _stepping=false;
 function smartStep(inp,dir){
   const v=(inp.value||'').trim();if(!v)return;
-  const m=v.match(/\.(\d+)$/);
-  const dec=m?m[1].length:0;
   const cur=parseFloat(v);if(!isFinite(cur))return;
+  const stored=parseInt(inp.dataset.dec||'-1',10);
+  const dec=Math.max(stored,readDec(v));
   const step=Math.pow(10,-dec);
-  inp.value=(cur+dir*step).toFixed(dec);
+  const next=cur+dir*step;
+  inp.dataset.dec=dec;
+  _stepping=true;
+  inp.value=dec>0?next.toFixed(dec):String(Math.round(next));
   inp.dispatchEvent(new Event('input',{bubbles:true}));
+  _stepping=false;
 }
 ['a','b','c','d'].forEach(p=>['_buy','_sell'].forEach(s=>{
   const inp=$(p+s);
   inp.addEventListener('keydown',ev=>{
     if(ev.key==='ArrowUp'||ev.key==='ArrowDown'){ev.preventDefault();smartStep(inp,ev.key==='ArrowUp'?1:-1)}
   });
+  inp.addEventListener('input',()=>{if(!_stepping)inp.dataset.dec=readDec(inp.value)});
 }));
 document.querySelectorAll('input.coin').forEach(i=>i.addEventListener('input',()=>{
   const s=i.selectionStart;i.value=i.value.toUpperCase().replace(/[^A-Z]/g,'');
